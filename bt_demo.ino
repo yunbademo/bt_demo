@@ -5,7 +5,7 @@
 const int LED_PIN = 13;
 const char *led_on = "on";
 const char *led_off = "off";
-const char *led_flash = "flash";
+const char *led_get = "get";
 
 void flash(int LedPin) {
   for (int i = 0; i < 3; i++) {
@@ -42,7 +42,7 @@ void setup() {
 
 void loop() {
   if (LBTServer.connected()) {
-  //  Serial.println("connected");
+    //  Serial.println("connected");
     while (true) {
       if (LBTServer.available() && LBTServer.connected()) {
         char buffer[32] = {0};
@@ -51,19 +51,30 @@ void loop() {
         if (!read_size)
           break;
 
-        if (strncmp(buffer, led_flash, strlen(led_flash)) == 0) {
-          flash(LED_PIN);
-        } else if (strncmp(buffer, led_on, strlen(led_on)) == 0) {
+        if (strncmp(buffer, led_on, strlen(led_on)) == 0) {
           digitalWrite(LED_PIN, HIGH);
         } else if (strncmp(buffer, led_off, strlen(led_off)) == 0) {
           digitalWrite(LED_PIN, LOW);
         }
-        char* buffer_w = "OK\r\n";
+        char* buffer_w;
+        int val = digitalRead(LED_PIN);
+        switch (val) {
+          case HIGH:
+            buffer_w = "on";
+            break;
+          case LOW:
+            buffer_w = "off";
+            break;
+          default:
+            buffer_w = "unknown";
+            break;
+        }
+
         Serial.printf("read size: %d, buf: %s\r\n", read_size, buffer);
         int write_size = LBTServer.write((uint8_t*)buffer_w, strlen(buffer_w));
         Serial.printf("write_size [%d]\r\n", write_size);
       } else {
-    //    Serial.println("not available");
+        //    Serial.println("not available");
         break;
       }
       delay(100);
